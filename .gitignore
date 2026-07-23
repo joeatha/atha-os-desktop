@@ -1,0 +1,17 @@
+node_modules/
+dist/
+out/
+*.log
+.DS_Store
+
+# Signing / notarization secrets — NEVER commit
+.env
+.env.*
+!.env.example
+*.p12
+*.cer
+*.certSigningRequest
+build/*.p8
+AuthKey_*.p8
+
+.npm-cache/
