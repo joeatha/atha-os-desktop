@@ -19,6 +19,20 @@ if (!gotLock) {
   app.on('second-instance', () => win.showWindow());
 
   app.whenReady().then(() => {
+    // macOS dock icon: packaged builds use the .icns, but in dev the dock shows
+    // the generic Electron icon — set our branded (black-bg) mark at runtime so
+    // it's consistent everywhere.
+    if (process.platform === 'darwin' && app.dock) {
+      try {
+        const path = require('path');
+        const { nativeImage } = require('electron');
+        const dockIcon = nativeImage.createFromPath(path.join(__dirname, 'build', 'icon.png'));
+        if (!dockIcon.isEmpty()) app.dock.setIcon(dockIcon);
+      } catch (e) {
+        log.warn('dock.setIcon failed', e && e.message);
+      }
+    }
+
     // Version sync for preload (synchronous — resolves before page scripts run).
     ipcMain.on('athaos:get-version', (e) => {
       e.returnValue = app.getVersion();
