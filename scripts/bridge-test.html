@@ -1,0 +1,20 @@
+<!doctype html><html><head><meta charset="utf-8"><title>bridge test</title></head>
+<body style="font-family:sans-serif;padding:20px">
+<h1>Atha OS desktop bridge test</h1>
+<pre id="out"></pre>
+<script>
+  const out = document.getElementById('out');
+  const log = (m) => { out.textContent += m + '\n'; };
+  log('isDesktop = ' + (window.athaDesktop && window.athaDesktop.isDesktop));
+  log('version = ' + (window.athaDesktop && window.athaDesktop.version));
+  log('has setPhonePresence = ' + !!(window.athaDesktop && window.athaDesktop.setPhonePresence));
+  log('has incomingCall = ' + !!(window.athaDesktop && window.athaDesktop.incomingCall));
+  if (window.athaDesktop) {
+    window.athaDesktop.setPhonePresence('registering');
+    setTimeout(() => window.athaDesktop.setPhonePresence('registered'), 600);
+    setTimeout(() => window.athaDesktop.incomingCall({ from: '+12175551234', name: 'Test Caller' }), 1200);
+    setTimeout(() => window.athaDesktop.callAnswered(), 2200);
+    setTimeout(() => window.athaDesktop.setPhonePresence('offline'), 3000);
+  }
+</script>
+</body></html>
