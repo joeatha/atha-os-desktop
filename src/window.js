@@ -7,6 +7,8 @@ const {
   shell,
   powerSaveBlocker,
   Notification,
+  systemPreferences,
+  dialog,
 } = require('electron');
 const log = require('electron-log');
 const {
@@ -47,6 +49,9 @@ function createWindow() {
     const ok =
       (permission === 'media' || permission === 'notifications') && allowFrom(url);
     log.info('permission request', permission, url, '->', ok);
+    // The app-level grant above lets Chromium hand the stream to the page, but the
+    // OS still gates the hardware. Make sure the OS prompt/guidance actually shows.
+    if (ok && permission === 'media') ensureOsMediaAccess();
     cb(ok);
   });
   ses.setPermissionCheckHandler((wc, permission, origin) => {
@@ -103,6 +108,53 @@ function createWindow() {
   });
 
   return win;
+}
+
+// Make sure the *operating system* will let us reach the mic/camera. Electron's
+// permission handler only governs the Chromium layer — the OS is a second gate.
+//   • macOS: trigger the native TCC prompt up-front the first time (persistent
+//     once answered; needs the usage-description strings + camera entitlement).
+//   • Windows: Win32 apps are NEVER prompted by the OS. If the global
+//     "let desktop apps access your camera/microphone" toggle is off, access
+//     silently fails — so surface an in-app dialog that opens the right Settings
+//     page. Guard so we ask at most once per type per session.
+const _osMediaAsked = new Set();
+async function ensureOsMediaAccess() {
+  for (const type of ['microphone', 'camera']) {
+    if (_osMediaAsked.has(type)) continue;
+    try {
+      const status = systemPreferences.getMediaAccessStatus(type);
+      log.info('OS media status', type, status);
+      if (status === 'granted') { _osMediaAsked.add(type); continue; }
+
+      if (process.platform === 'darwin') {
+        if (status === 'not-determined') {
+          _osMediaAsked.add(type);
+          const granted = await systemPreferences.askForMediaAccess(type);
+          log.info('macOS askForMediaAccess', type, '->', granted);
+        }
+        // 'denied'/'restricted' can only be changed by the user in System Settings.
+      } else if (process.platform === 'win32' && status === 'denied') {
+        _osMediaAsked.add(type);
+        const isCam = type === 'camera';
+        const { response } = await dialog.showMessageBox(win, {
+          type: 'warning',
+          title: `Allow ${type} access`,
+          message: `Windows is blocking ${type} access for desktop apps.`,
+          detail:
+            `Open Settings → Privacy & security → ${isCam ? 'Camera' : 'Microphone'} ` +
+            `and turn on “Let desktop apps access your ${type}.” Then rejoin the meeting.`,
+          buttons: ['Open Windows Settings', 'Later'],
+          defaultId: 0,
+          cancelId: 1,
+          noLink: true,
+        });
+        if (response === 0) shell.openExternal(isCam ? 'ms-settings:privacy-webcam' : 'ms-settings:privacy-microphone');
+      }
+    } catch (e) {
+      log.warn('ensureOsMediaAccess failed', type, e && e.message);
+    }
+  }
 }
 
 function startPowerSaveBlocker() {
