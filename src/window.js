@@ -30,11 +30,14 @@ function createWindow() {
   // Append our tag to the UA so the web app can detect the desktop shell.
   ses.setUserAgent(`${ses.getUserAgent()} ${UA_TAG}`);
 
-  // Mic (+ notifications) permission: the softphone needs audio input. Allow
-  // only from our own origin; deny everything else.
+  // Camera/mic (+ notifications) permission: the softphone needs audio input,
+  // and video meetings joined in-app (Google Meet) need camera + mic. Allow only
+  // from our own origin and trusted meeting hosts; deny everything else.
+  const MEDIA_HOSTS = ['athaos.netlify.app', 'meet.google.com'];
   const allowFrom = (url) => {
     try {
-      return new URL(url).hostname.endsWith('athaos.netlify.app');
+      const host = new URL(url).hostname;
+      return MEDIA_HOSTS.some((h) => host === h || host.endsWith(`.${h}`));
     } catch {
       return false;
     }

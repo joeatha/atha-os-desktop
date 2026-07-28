@@ -60,6 +60,7 @@
       "entitlementsInherit": "build/entitlements.mac.plist",
       "extendInfo": {
         "NSMicrophoneUsageDescription": "Atha OS uses your microphone for the built-in softphone so you can take and make calls.",
+        "NSCameraUsageDescription": "Atha OS uses your camera for video meetings you join inside the app.",
         "LSUIElement": false
       },
       "notarize": { "teamId": "YMHAWA25ZZ" }
