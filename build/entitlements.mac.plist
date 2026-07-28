@@ -6,6 +6,10 @@
   <key>com.apple.security.device.audio-input</key>
   <true/>
 
+  <!-- Camera access for video meetings (e.g. Google Meet) opened in-app -->
+  <key>com.apple.security.device.camera</key>
+  <true/>
+
   <!-- Electron under the hardened runtime needs these JIT/memory entitlements -->
   <key>com.apple.security.cs.allow-jit</key>
   <true/>
