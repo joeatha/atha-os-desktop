@@ -44,6 +44,10 @@ const POPUP_ALLOW_HOSTS = [
   '.intuit.com',
 ];
 
+// Origins allowed to reach the camera, microphone and screen capture: our own
+// site (softphone) plus meeting hosts we open in-app.
+const MEDIA_HOSTS = ['athaos.netlify.app', 'meet.google.com'];
+
 // Origins the app legitimately talks to via fetch/XHR/WebSocket/WebRTC. NOT
 // enforced by navigation locking (Electron doesn't gate subresources on
 // will-navigate); documented here and used only for reference/CSP if ever added.
@@ -62,6 +66,7 @@ const KNOWN_API_HOSTS = [
 if (IS_DEV) {
   IN_APP_NAV_HOSTS.push('localhost', '127.0.0.1');
   POPUP_ALLOW_HOSTS.push('localhost', '127.0.0.1');
+  MEDIA_HOSTS.push('localhost', '127.0.0.1');
 }
 
 function hostMatches(host, patterns) {
@@ -95,6 +100,7 @@ module.exports = {
   UA_TAG,
   IN_APP_NAV_HOSTS,
   POPUP_ALLOW_HOSTS,
+  MEDIA_HOSTS,
   KNOWN_API_HOSTS,
   isInAppNav,
   isPopupAllowed,

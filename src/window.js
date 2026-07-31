@@ -15,9 +15,11 @@ const {
   APP_URL,
   SESSION_PARTITION,
   UA_TAG,
+  MEDIA_HOSTS,
   isInAppNav,
   isPopupAllowed,
 } = require('./config');
+const screenshare = require('./screenshare');
 
 let win = null;
 let psbId = null; // powerSaveBlocker id
@@ -32,10 +34,10 @@ function createWindow() {
   // Append our tag to the UA so the web app can detect the desktop shell.
   ses.setUserAgent(`${ses.getUserAgent()} ${UA_TAG}`);
 
-  // Camera/mic (+ notifications) permission: the softphone needs audio input,
-  // and video meetings joined in-app (Google Meet) need camera + mic. Allow only
-  // from our own origin and trusted meeting hosts; deny everything else.
-  const MEDIA_HOSTS = ['athaos.netlify.app', 'meet.google.com'];
+  // Camera/mic/screen (+ notifications) permission: the softphone needs audio
+  // input, and video meetings joined in-app (Google Meet) need camera + mic, plus
+  // `display-capture` to present a screen. Allow only from our own origin and
+  // trusted meeting hosts; deny everything else. (MEDIA_HOSTS lives in config.js.)
   const allowFrom = (url) => {
     try {
       const host = new URL(url).hostname;
@@ -44,10 +46,10 @@ function createWindow() {
       return false;
     }
   };
+  const ALLOWED_PERMISSIONS = ['media', 'display-capture', 'notifications'];
   ses.setPermissionRequestHandler((wc, permission, cb, details) => {
     const url = (details && details.requestingUrl) || (wc && wc.getURL && wc.getURL()) || '';
-    const ok =
-      (permission === 'media' || permission === 'notifications') && allowFrom(url);
+    const ok = ALLOWED_PERMISSIONS.includes(permission) && allowFrom(url);
     log.info('permission request', permission, url, '->', ok);
     // The app-level grant above lets Chromium hand the stream to the page, but the
     // OS still gates the hardware. Make sure the OS prompt/guidance actually shows.
@@ -55,8 +57,12 @@ function createWindow() {
     cb(ok);
   });
   ses.setPermissionCheckHandler((wc, permission, origin) => {
-    return (permission === 'media' || permission === 'notifications') && allowFrom(origin);
+    return ALLOWED_PERMISSIONS.includes(permission) && allowFrom(origin);
   });
+
+  // getDisplayMedia() is rejected outright unless the app installs a handler —
+  // this is what makes "Present now" work in an in-app Google Meet.
+  screenshare.init(ses, getWindow);
 
   win = new BrowserWindow({
     width: 1440,

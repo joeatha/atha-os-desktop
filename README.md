@@ -19,6 +19,7 @@ Atha OS includes a **softphone** (Twilio Voice JS SDK, identity `client:<user-em
 - **System tray:** show/hide, live phone-presence indicator (icon turns green when registered), start-at-login toggle, check-for-updates, quit.
 - **Auto-launch at login** (default ON, toggleable), booting hidden into the tray.
 - **Microphone permission** handled for our origin (+ macOS `NSMicrophoneUsageDescription`). The web app's in-app mic picker (incl. "System Default") keeps working.
+- **Camera + screen sharing for in-app meetings** (Google Meet). Electron ships no source picker, so `src/screenshare.js` installs the `setDisplayMediaRequestHandler` and renders our own screens/windows picker (`src/picker.html`). macOS Screen Recording has no `askForMediaAccess()` API — the first share attempt triggers the OS prompt, and if it's still blocked we deep-link to System Settings and offer a relaunch (the grant only applies to a fresh process). Verify with `npx electron scripts/picker-test.js` (UI, no OS grant needed) and `npx electron scripts/screenshare-test.js` (full path, needs the grant).
 - **Incoming-call notification:** native OS notification + window focus/flash when a call rings.
 - **Auto-update** (`electron-updater`) from GitHub Releases — shell updates only.
 
