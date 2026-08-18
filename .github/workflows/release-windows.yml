@@ -1,0 +1,45 @@
+name: Release (Windows)
+
+# The Windows installer cannot be cross-built from the Mac that cuts our releases
+# — electron-builder needs wine for an NSIS target, and it isn't installed there.
+# v1.0.3 shipped macOS-only for exactly that reason, which left Windows users on
+# the previous build (and, that release being the passkey fix, unable to sign in
+# with a passkey at all). This job builds the Windows half on a Windows runner and
+# uploads it into the SAME GitHub release, which is where electron-updater looks
+# for latest.yml.
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing release tag to build and upload into (e.g. v1.0.3)'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      # Includes scripts/passkey-domain-test.js, so a Windows build can never
+      # ship pointing at a host our passkey RP ID is invalid for.
+      - run: npm run check
+
+      - name: Build and publish the Windows installer
+        run: npx electron-builder --win --publish always
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
