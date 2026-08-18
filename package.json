@@ -44,8 +44,7 @@
       {
         "provider": "github",
         "owner": "joeatha",
-        "repo": "atha-os-desktop",
-        "releaseType": "release"
+        "repo": "atha-os-desktop"
       }
     ],
     "mac": {
