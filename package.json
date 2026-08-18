@@ -1,7 +1,7 @@
 {
   "name": "atha-os-desktop",
   "productName": "Atha OS",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Always-on desktop shell for Atha OS — keeps the softphone registered in the background so queue calls are never missed.",
   "main": "main.js",
   "author": "Atha Enterprises LLC",
