@@ -6,7 +6,15 @@ const IS_DEV = process.env.ATHAOS_DEV === '1';
 
 // The live deployed site. The desktop app NEVER bundles index.html — it loads
 // this URL so every Netlify web deploy is reflected instantly with no desktop release.
-const APP_URL = process.env.ATHAOS_URL || 'https://athaos.netlify.app';
+//
+// MUST be the pmione.com custom domain, not the athaos.netlify.app hostname that
+// serves the same site. Passkeys are bound to a WebAuthn Relying Party ID, and
+// Supabase issues ours as "pmione.com". A browser only accepts an RP ID that is
+// the caller's own domain or a registrable parent of it, so loading the app from
+// athaos.netlify.app made every passkey sign-in fail outright with
+// "The RP ID \"pmione.com\" is invalid for this domain" — the credential was
+// never even looked up. Same site, different origin, no passkeys.
+const APP_URL = process.env.ATHAOS_URL || 'https://pmione.com';
 
 // Persistent session partition so login (Supabase magic-link/Google/passkey)
 // and cookies survive restarts.
@@ -19,9 +27,13 @@ const UA_TAG = `AthaOSDesktop/${require('../package.json').version}`;
 // --- Navigation policy -------------------------------------------------------
 // Top-level (main-frame) navigations allowed to stay INSIDE the window. This
 // must include our own site plus the OAuth providers whose redirect flows must
-// return to athaos.netlify.app (otherwise sign-in bounces to the system browser
-// and breaks). Everything else opens in the user's real browser.
+// return to pmione.com (otherwise sign-in bounces to the system browser and
+// breaks). Everything else opens in the user's real browser.
 const IN_APP_NAV_HOSTS = [
+  'pmione.com',
+  'www.pmione.com',
+  // Legacy hostname for the same site. Kept in-app so an older absolute link
+  // (or a shell that has not updated yet) is not ejected to the browser.
   'athaos.netlify.app',
   // Supabase auth / data
   '.supabase.co',
@@ -36,6 +48,8 @@ const IN_APP_NAV_HOSTS = [
 // Popups (window.open / target=_blank) allowed to open as a controlled child
 // window instead of being pushed to the external browser — same auth providers.
 const POPUP_ALLOW_HOSTS = [
+  'pmione.com',
+  'www.pmione.com',
   'athaos.netlify.app',
   '.supabase.co',
   'accounts.google.com',
@@ -46,7 +60,7 @@ const POPUP_ALLOW_HOSTS = [
 
 // Origins allowed to reach the camera, microphone and screen capture: our own
 // site (softphone) plus meeting hosts we open in-app.
-const MEDIA_HOSTS = ['athaos.netlify.app', 'meet.google.com'];
+const MEDIA_HOSTS = ['pmione.com', 'www.pmione.com', 'athaos.netlify.app', 'meet.google.com'];
 
 // Origins the app legitimately talks to via fetch/XHR/WebSocket/WebRTC. NOT
 // enforced by navigation locking (Electron doesn't gate subresources on
