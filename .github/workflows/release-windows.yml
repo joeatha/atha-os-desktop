@@ -39,7 +39,27 @@ jobs:
       # ship pointing at a host our passkey RP ID is invalid for.
       - run: npm run check
 
+      # -c.publish.releaseType=release is NOT redundant with package.json: this job
+      # checks out an existing TAG, whose package.json predates that setting. Without
+      # the override electron-builder defaults to `draft`, refuses to touch an
+      # already-published release ("existing type not compatible with publishing
+      # type"), skips every upload — and still exits 0.
       - name: Build and publish the Windows installer
-        run: npx electron-builder --win --publish always
+        run: npx electron-builder --win --publish always -c.publish.releaseType=release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # electron-builder reports a skipped upload as success, so a green build proves
+      # nothing. Ask GitHub what the release actually contains.
+      - name: Verify the installer reached the release
+        shell: bash
+        run: |
+          TAG="${{ github.event.inputs.tag || github.ref_name }}"
+          ASSETS=$(gh release view "$TAG" --json assets --jq '.assets[].name')
+          echo "$ASSETS"
+          for want in Atha-OS-Setup-x64.exe latest.yml; do
+            echo "$ASSETS" | grep -qx "$want" || { echo "::error::$want missing from release $TAG"; exit 1; }
+          done
+          echo "Windows installer and update feed are present on $TAG"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
