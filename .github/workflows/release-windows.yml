@@ -44,7 +44,12 @@ jobs:
       # the override electron-builder defaults to `draft`, refuses to touch an
       # already-published release ("existing type not compatible with publishing
       # type"), skips every upload — and still exits 0.
+      # shell: bash is load-bearing. Under the runner's default PowerShell,
+      # `-c.publish.releaseType=release` is parsed as `-c` with the value
+      # `.publish.releaseType=release`, so electron-builder tries to open that as a
+      # config FILE and dies with ENOENT.
       - name: Build and publish the Windows installer
+        shell: bash
         run: npx electron-builder --win --publish always -c.publish.releaseType=release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
