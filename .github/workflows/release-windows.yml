@@ -39,23 +39,33 @@ jobs:
       # ship pointing at a host our passkey RP ID is invalid for.
       - run: npm run check
 
-      # -c.publish.releaseType=release is NOT redundant with package.json: this job
-      # checks out an existing TAG, whose package.json predates that setting. Without
-      # the override electron-builder defaults to `draft`, refuses to touch an
-      # already-published release ("existing type not compatible with publishing
-      # type"), skips every upload — and still exits 0.
-      # shell: bash is load-bearing. Under the runner's default PowerShell,
-      # `-c.publish.releaseType=release` is parsed as `-c` with the value
-      # `.publish.releaseType=release`, so electron-builder tries to open that as a
-      # config FILE and dies with ENOENT.
-      - name: Build and publish the Windows installer
+      # Build only. electron-builder's own GitHub publisher cannot be used here: it
+      # refuses an existing release that was published more than 2 hours ago
+      # ("existing release published more than 2 hours ago") and, before that, any
+      # release whose type does not match its default `draft` — and it reports both
+      # refusals as SUCCESS. `gh release upload` has neither restriction.
+      - name: Build the Windows installer
         shell: bash
-        run: npx electron-builder --win --publish always -c.publish.releaseType=release
+        run: npx electron-builder --win --publish never
+
+      - name: Upload into the release
+        shell: bash
+        run: |
+          TAG="${{ github.event.inputs.tag || github.ref_name }}"
+          if ! gh release view "$TAG" >/dev/null 2>&1; then
+            echo "::error::Release $TAG does not exist. Cut the macOS release first (npm run release -- --mac, then publish the draft), then re-run this job."
+            exit 1
+          fi
+          gh release upload "$TAG" \
+            dist/Atha-OS-Setup-x64.exe \
+            dist/Atha-OS-Setup-x64.exe.blockmap \
+            dist/latest.yml \
+            --clobber
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # electron-builder reports a skipped upload as success, so a green build proves
-      # nothing. Ask GitHub what the release actually contains.
+      # An upload that silently did nothing looks exactly like one that worked, so
+      # ask GitHub what the release actually contains rather than trusting exit codes.
       - name: Verify the installer reached the release
         shell: bash
         run: |
