@@ -20,5 +20,13 @@
   <!-- Allow loading of embedded frameworks/helpers -->
   <key>com.apple.security.cs.disable-library-validation</key>
   <true/>
+
+  <!-- Passkeys: where the Secure Enclave WebAuthn credentials are stored. MUST match
+       KEYCHAIN_ACCESS_GROUP in src/webauthn.js — app.configureWebAuthn silently
+       fails to produce a working authenticator if the two disagree. -->
+  <key>keychain-access-groups</key>
+  <array>
+    <string>YMHAWA25ZZ.com.athaenterprises.athaos.webauthn</string>
+  </array>
 </dict>
 </plist>
