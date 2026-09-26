@@ -1,7 +1,7 @@
 {
   "name": "atha-os-desktop",
   "productName": "Atha OS",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Always-on desktop shell for Atha OS — keeps the softphone registered in the background so queue calls are never missed.",
   "main": "main.js",
   "author": "Atha Enterprises LLC",
@@ -10,7 +10,7 @@
   "scripts": {
     "start": "electron .",
     "dev": "ATHAOS_DEV=1 electron .",
-    "check": "node --check main.js && node --check preload.js && node --check src/config.js && node --check src/window.js && node --check src/tray.js && node --check src/updater.js && node --check src/autolaunch.js && node --check src/screenshare.js && node --check src/picker-preload.js && node --check src/picker.js && node scripts/passkey-domain-test.js",
+    "check": "node --check main.js && node --check preload.js && node --check src/config.js && node --check src/window.js && node --check src/tray.js && node --check src/updater.js && node --check src/autolaunch.js && node --check src/screenshare.js && node --check src/picker-preload.js && node --check src/picker.js && node scripts/passkey-domain-test.js && node scripts/incoming-call-toast-test.js",
     "dist": "electron-builder",
     "dist:mac": "electron-builder --mac",
     "dist:win": "electron-builder --win",

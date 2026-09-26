@@ -234,7 +234,12 @@ function notifyIncomingCall(info) {
   const from = (info && (info.name || info.from)) || 'Unknown caller';
   log.info('incoming call from', from);
 
-  if (Notification.isSupported()) {
+  // Already looking at Atha OS → the in-app call bar IS the notice. A critical
+  // OS toast would only land on top of the bar's Answer button, so staff click
+  // the toast instead of answering (Atha OS Dev item 2d203bdf).
+  const inFront = !!(win && !win.isDestroyed() && win.isVisible() && win.isFocused() && !win.isMinimized());
+
+  if (!inFront && Notification.isSupported()) {
     const n = new Notification({
       title: 'Incoming call — Atha OS',
       body: `${from}\nClick to answer in Atha OS`,
