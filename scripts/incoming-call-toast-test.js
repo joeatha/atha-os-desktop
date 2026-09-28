@@ -36,8 +36,8 @@ function run(winState) {
     flashFrame() {}, setAlwaysOnTop() {},
   };
   // eslint-disable-next-line no-new-func
-  const notify = new Function('Notification', 'log', 'win', 'showWindow', 'process',
-    fnSrc + '\nreturn notifyIncomingCall;')(Notification, { info() {} }, win, () => {}, { platform: 'win32' });
+  const notify = new Function('Notification', 'log', 'win', 'showWindow', 'answerFromToast', 'process',
+    fnSrc + '\nreturn notifyIncomingCall;')(Notification, { info() {} }, win, () => {}, () => {}, { platform: 'win32' });
   notify({ from: '+13175551234', name: 'Resident' });
   return shown.length;
 }

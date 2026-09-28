@@ -245,7 +245,7 @@ function notifyIncomingCall(info) {
       body: `${from}\nClick to answer in Atha OS`,
       urgency: 'critical',
     });
-    n.on('click', showWindow);
+    n.on('click', answerFromToast);
     n.show();
   }
 
@@ -258,6 +258,17 @@ function notifyIncomingCall(info) {
   }
 }
 
+// The toast says "Click to answer" — so a click must ANSWER, not just raise the
+// window. It used to call showWindow() only: the call kept ringing while the
+// agent believed they had answered, and it rang out (Atha OS Dev 5ce38cc7,
+// "It ended the call when I hit Answer"). The page decides whether a call is
+// actually still ringing; this only asks.
+function answerFromToast() {
+  log.info('incoming-call toast clicked → asking the page to answer');
+  showWindow();
+  if (win && !win.isDestroyed() && win.webContents) win.webContents.send('athaos:answer-call');
+}
+
 function stopFlashing() {
   if (win && process.platform === 'win32') win.flashFrame(false);
 }
@@ -268,5 +279,6 @@ module.exports = {
   showWindow,
   toggleWindow,
   notifyIncomingCall,
+  answerFromToast,
   stopFlashing,
 };

@@ -36,6 +36,7 @@ The web app can detect and drive the shell:
 if (window.athaDesktop?.isDesktop) {
   window.athaDesktop.setPhonePresence('registered');      // tray goes green
   window.athaDesktop.incomingCall({ from: '+1217…', name: 'Jane' }); // native notif + focus
+  window.athaDesktop.onAnswerRequested(() => answerIfRinging()); // toast clicked (1.0.5+)
 }
 // Or via DOM events (no bridge dependency):
 window.dispatchEvent(new CustomEvent('athaos:incoming-call', { detail: { from } }));
