@@ -28,6 +28,14 @@ contextBridge.exposeInMainWorld('athaDesktop', {
   callAnswered() {
     ipcRenderer.send('athaos:call-answered');
   },
+
+  // The OS "Incoming call" toast was clicked → the page should answer the
+  // ringing call (it decides whether one is still ringing). The callback gets
+  // NO arguments: the IPC event object never crosses into the remote page.
+  onAnswerRequested(cb) {
+    if (typeof cb !== 'function') return;
+    ipcRenderer.on('athaos:answer-call', () => { try { cb(); } catch (_) {} });
+  },
 });
 
 // --- DOM-event fallback ------------------------------------------------------
