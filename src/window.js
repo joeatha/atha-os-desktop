@@ -9,6 +9,7 @@ const {
   Notification,
   systemPreferences,
   dialog,
+  Menu,
 } = require('electron');
 const log = require('electron-log');
 const {
@@ -20,6 +21,7 @@ const {
   isPopupAllowed,
 } = require('./config');
 const screenshare = require('./screenshare');
+const { wireContextMenu } = require('./context-menu');
 
 let win = null;
 let psbId = null; // powerSaveBlocker id
@@ -97,6 +99,8 @@ function createWindow() {
   });
 
   wireNavigationLock(win.webContents);
+  // Right-click: spelling suggestions + Cut/Copy/Paste (src/context-menu.js).
+  wireContextMenu(win.webContents, { Menu, getWindow: () => win });
 
   // Close = hide to tray (configurable via app quit flag set in main.js).
   win.on('close', (e) => {
