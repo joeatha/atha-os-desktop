@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; style-src 'unsafe-inline'; script-src 'self' file:"
+    />
+    <title>Incoming call</title>
+    <style>
+      :root {
+        --bg: #0f1729;
+        --panel: #182131;
+        --border: #2a3547;
+        --text: #e7ecf3;
+        --muted: #8a97ab;
+        --accent: #f36f21;
+        --decline: #7f1d1d;
+        --emergency: #dc2626;
+      }
+      * { box-sizing: border-box; }
+      html, body { height: 100%; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font: 14px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        user-select: none;
+        cursor: default;
+        overflow: hidden;
+      }
+      .card {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: 22px 26px 24px;
+        border: 2px solid var(--accent);
+        -webkit-app-region: drag;
+      }
+      body.emergency .card { border-color: var(--emergency); }
+      .label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--accent);
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+      }
+      body.emergency .label { color: var(--emergency); }
+      .dot {
+        width: 10px; height: 10px; border-radius: 50%;
+        background: currentColor;
+        animation: pulse 1s ease-in-out infinite;
+      }
+      @keyframes pulse { 50% { opacity: .25; transform: scale(.8); } }
+      @media (prefers-reduced-motion: reduce) { .dot { animation: none; } }
+      .who { margin-top: 14px; min-width: 0; }
+      #name {
+        font-size: 26px;
+        font-weight: 700;
+        line-height: 1.2;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      #number { margin-top: 4px; color: var(--muted); font-size: 16px; min-height: 22px; }
+      .actions { display: flex; gap: 12px; -webkit-app-region: no-drag; }
+      button {
+        flex: 1;
+        padding: 14px 0;
+        border: 0;
+        border-radius: 999px;
+        font: inherit;
+        font-size: 16px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      button:disabled { opacity: .5; cursor: default; }
+      button:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+      #decline { background: var(--decline); color: #fff; }
+      #answer { background: var(--accent); color: #000; }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <div>
+        <div class="label"><span class="dot" aria-hidden="true"></span><span id="label">Incoming call</span></div>
+        <div class="who" role="status" aria-live="assertive">
+          <div id="name">Incoming call</div>
+          <div id="number"></div>
+        </div>
+      </div>
+      <div class="actions">
+        <button id="decline" type="button">Decline</button>
+        <button id="answer" type="button">Answer</button>
+      </div>
+    </div>
+    <script src="call-overlay-renderer.js"></script>
+  </body>
+</html>

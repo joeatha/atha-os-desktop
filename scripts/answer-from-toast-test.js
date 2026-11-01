@@ -38,9 +38,11 @@ const win = {
   webContents: { send: (ch, ...a) => sent.push([ch, ...a]) },
 };
 // eslint-disable-next-line no-new-func
-const api = new Function('Notification', 'log', 'win', 'showWindow', 'process',
+// callOverlay.show() → false: the toast is the fallback when the incoming-call
+// pop-up can't be shown (tests/incoming-call-overlay.test.js covers the pop-up).
+const api = new Function('Notification', 'log', 'win', 'showWindow', 'process', 'callOverlay',
   extract(winSrc, 'notifyIncomingCall') + '\n' + extract(winSrc, 'answerFromToast') +
-  '\nreturn { notifyIncomingCall, answerFromToast };')(Notification, { info() {} }, win, () => { shown++; }, { platform: 'win32' });
+  '\nreturn { notifyIncomingCall, answerFromToast };')(Notification, { info() {}, warn() {} }, win, () => { shown++; }, { platform: 'win32' }, { show: () => false });
 
 api.notifyIncomingCall({ from: '+13175551234' });
 assert.ok(clickHandler, 'toast registers a click handler');

@@ -36,8 +36,11 @@ function run(winState) {
     flashFrame() {}, setAlwaysOnTop() {},
   };
   // eslint-disable-next-line no-new-func
-  const notify = new Function('Notification', 'log', 'win', 'showWindow', 'answerFromToast', 'process',
-    fnSrc + '\nreturn notifyIncomingCall;')(Notification, { info() {} }, win, () => {}, () => {}, { platform: 'win32' });
+  // The pop-up (src/call-overlay.js) replaces the toast when it shows; this
+  // covers the toast as the fallback when it can't (show() → false).
+  const callOverlay = { show: () => false };
+  const notify = new Function('Notification', 'log', 'win', 'showWindow', 'answerFromToast', 'process', 'callOverlay',
+    fnSrc + '\nreturn notifyIncomingCall;')(Notification, { info() {}, warn() {} }, win, () => {}, () => {}, { platform: 'win32' }, callOverlay);
   notify({ from: '+13175551234', name: 'Resident' });
   return shown.length;
 }

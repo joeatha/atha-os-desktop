@@ -20,7 +20,7 @@ Atha OS includes a **softphone** (Twilio Voice JS SDK, identity `client:<user-em
 - **Auto-launch at login** (default ON, toggleable), booting hidden into the tray.
 - **Microphone permission** handled for our origin (+ macOS `NSMicrophoneUsageDescription`). The web app's in-app mic picker (incl. "System Default") keeps working.
 - **Camera + screen sharing for in-app meetings** (Google Meet). Electron ships no source picker, so `src/screenshare.js` installs the `setDisplayMediaRequestHandler` and renders our own screens/windows picker (`src/picker.html`). macOS Screen Recording has no `askForMediaAccess()` API — the first share attempt triggers the OS prompt, and if it's still blocked we deep-link to System Settings and offer a relaunch (the grant only applies to a fresh process). Verify with `npx electron scripts/picker-test.js` (UI, no OS grant needed) and `npx electron scripts/screenshare-test.js` (full path, needs the grant).
-- **Incoming-call notification:** native OS notification + window focus/flash when a call rings.
+- **Incoming-call pop-up:** when a call rings and the Atha OS window isn't in front, a small frameless always-on-top window (`src/call-overlay.*`, local content only, sandboxed) pops up centered on the screen the cursor is on, on every workspace and over full-screen apps, with the caller and **Answer / Decline**. It closes when the call is answered, declined or ends (the page's `callAnswered()`), or after 2 minutes of ringing. The native OS notification is the fallback if the pop-up can't be shown; the window still comes forward / flashes.
 - **Auto-update** (`electron-updater`) from GitHub Releases — shell updates only.
 
 ### Security posture (this loads a remote URL)
@@ -37,6 +37,8 @@ if (window.athaDesktop?.isDesktop) {
   window.athaDesktop.setPhonePresence('registered');      // tray goes green
   window.athaDesktop.incomingCall({ from: '+1217…', name: 'Jane' }); // native notif + focus
   window.athaDesktop.onAnswerRequested(() => answerIfRinging()); // toast clicked (1.0.5+)
+  window.athaDesktop.onDeclineRequested(() => declineIfRinging()); // pop-up Decline (1.0.7+)
+  window.athaDesktop.callAnswered();   // call answered OR ring ended → stop flash, close pop-up
 }
 // Or via DOM events (no bridge dependency):
 window.dispatchEvent(new CustomEvent('athaos:incoming-call', { detail: { from } }));

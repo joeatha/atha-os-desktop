@@ -41,7 +41,7 @@ if (!gotLock) {
     // Softphone → shell events.
     ipcMain.on('athaos:incoming-call', (_e, info) => win.notifyIncomingCall(info));
     ipcMain.on('athaos:phone-presence', (_e, state) => tray.setPresence(state));
-    ipcMain.on('athaos:call-answered', () => win.stopFlashing());
+    ipcMain.on('athaos:call-answered', () => win.ringEnded());
 
     win.createWindow();
     tray.createTray();
