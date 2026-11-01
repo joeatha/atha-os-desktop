@@ -12,7 +12,8 @@ contextBridge.exposeInMainWorld('athaDesktop', {
   isDesktop: true,
   version: ipcRenderer.sendSync('athaos:get-version'),
 
-  // Softphone tells the shell a call is ringing → native notification + window focus.
+  // Softphone tells the shell a call is ringing → pop-up over everything (or the
+  // native notification as fallback) + window focus.
   // info: { from?: string, name?: string }
   incomingCall(info) {
     ipcRenderer.send('athaos:incoming-call', sanitize(info));
@@ -24,7 +25,8 @@ contextBridge.exposeInMainWorld('athaDesktop', {
     ipcRenderer.send('athaos:phone-presence', String(state || 'offline'));
   },
 
-  // Optional: let the page clear a pending incoming-call notification.
+  // The page calls this when a call is answered AND when a ring ends: it stops
+  // the taskbar flash and closes the incoming-call pop-up.
   callAnswered() {
     ipcRenderer.send('athaos:call-answered');
   },
@@ -35,6 +37,13 @@ contextBridge.exposeInMainWorld('athaDesktop', {
   onAnswerRequested(cb) {
     if (typeof cb !== 'function') return;
     ipcRenderer.on('athaos:answer-call', () => { try { cb(); } catch (_) {} });
+  },
+
+  // Decline was pressed on the incoming-call pop-up → the page should decline
+  // the ringing call (it decides whether one is still ringing). No arguments.
+  onDeclineRequested(cb) {
+    if (typeof cb !== 'function') return;
+    ipcRenderer.on('athaos:decline-call', () => { try { cb(); } catch (_) {} });
   },
 });
 

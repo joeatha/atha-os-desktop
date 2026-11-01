@@ -22,6 +22,7 @@ const {
 } = require('./config');
 const screenshare = require('./screenshare');
 const { wireContextMenu } = require('./context-menu');
+const callOverlay = require('./call-overlay');
 
 let win = null;
 let psbId = null; // powerSaveBlocker id
@@ -99,6 +100,13 @@ function createWindow() {
   });
 
   wireNavigationLock(win.webContents);
+  // Incoming-call pop-up over everything (src/call-overlay.js). Its buttons take
+  // the same paths as the toast: Answer → the page answers; Decline → the page
+  // declines (index.html registers athaDesktop.onDeclineRequested).
+  callOverlay.init({ onAnswer: answerFromToast, onDecline: declineFromOverlay });
+  // The page reloading or crashing ends any ringing call with it.
+  win.webContents.on('did-navigate', () => callOverlay.close());
+  win.webContents.on('render-process-gone', () => callOverlay.close());
   // Right-click: spelling suggestions + Cut/Copy/Paste (src/context-menu.js).
   wireContextMenu(win.webContents, { Menu, getWindow: () => win });
 
@@ -243,7 +251,20 @@ function notifyIncomingCall(info) {
   // the toast instead of answering (Atha OS Dev item 2d203bdf).
   const inFront = !!(win && !win.isDestroyed() && win.isVisible() && win.isFocused() && !win.isMinimized());
 
-  if (!inFront && Notification.isSupported()) {
+  // Not looking at Atha OS → pop the call up over everything, centered on the
+  // screen the cursor is on, with Answer / Decline (Atha OS Dev e48f339f: the
+  // toast and taskbar flash were too easy to miss in another app). The pop-up
+  // replaces the toast; the toast is the fallback if it can't be shown.
+  let popped = false;
+  if (!inFront) {
+    try {
+      popped = !!callOverlay.show(info);
+    } catch (e) {
+      log.warn('call overlay failed', e && e.message);
+    }
+  }
+
+  if (!inFront && !popped && Notification.isSupported()) {
     const n = new Notification({
       title: 'Incoming call — Atha OS',
       body: `${from}\nClick to answer in Atha OS`,
@@ -273,8 +294,25 @@ function answerFromToast() {
   if (win && !win.isDestroyed() && win.webContents) win.webContents.send('athaos:answer-call');
 }
 
+// Decline on the pop-up → ask the page to decline the ringing call. The page
+// decides whether one is still ringing. A page that hasn't registered
+// onDeclineRequested yet ignores this, so the call keeps ringing in the app
+// (the pop-up still closes).
+function declineFromOverlay() {
+  log.info('incoming-call pop-up Decline → asking the page to decline');
+  if (win && !win.isDestroyed() && win.webContents) win.webContents.send('athaos:decline-call');
+}
+
 function stopFlashing() {
   if (win && process.platform === 'win32') win.flashFrame(false);
+}
+
+// The page calls athaDesktop.callAnswered() when a call is answered AND when a
+// ring ends (cancel / reject / disconnect / error) — stop the flash and take
+// the pop-up down either way.
+function ringEnded() {
+  stopFlashing();
+  callOverlay.close();
 }
 
 module.exports = {
@@ -284,5 +322,7 @@ module.exports = {
   toggleWindow,
   notifyIncomingCall,
   answerFromToast,
+  declineFromOverlay,
   stopFlashing,
+  ringEnded,
 };
