@@ -107,6 +107,25 @@ function isPopupAllowed(urlString) {
   }
 }
 
+// Which permission requests the window grants. Camera, mic, screen capture and
+// notifications only from MEDIA_HOSTS. Full screen from any frame: it is what a
+// video's own full-screen button asks for (Academy lessons embed YouTube/Loom
+// players), it needs a click, and Esc always leaves it. Atha OS Dev item 013765ab
+// (Justin Norris, 2026-11-02): the button did nothing in the desktop app because
+// 'fullscreen' was not on the list, so every request was denied.
+const MEDIA_PERMISSIONS = ['media', 'display-capture', 'notifications'];
+const ANY_ORIGIN_PERMISSIONS = ['fullscreen'];
+
+function isPermissionAllowed(permission, urlString) {
+  if (ANY_ORIGIN_PERMISSIONS.includes(permission)) return true;
+  if (!MEDIA_PERMISSIONS.includes(permission)) return false;
+  try {
+    return hostMatches(new URL(urlString).hostname, MEDIA_HOSTS);
+  } catch {
+    return false;
+  }
+}
+
 module.exports = {
   IS_DEV,
   APP_URL,
@@ -118,4 +137,5 @@ module.exports = {
   KNOWN_API_HOSTS,
   isInAppNav,
   isPopupAllowed,
+  isPermissionAllowed,
 };

@@ -16,9 +16,9 @@ const {
   APP_URL,
   SESSION_PARTITION,
   UA_TAG,
-  MEDIA_HOSTS,
   isInAppNav,
   isPopupAllowed,
+  isPermissionAllowed,
 } = require('./config');
 const screenshare = require('./screenshare');
 const { wireContextMenu } = require('./context-menu');
@@ -40,28 +40,18 @@ function createWindow() {
   // Camera/mic/screen (+ notifications) permission: the softphone needs audio
   // input, and video meetings joined in-app (Google Meet) need camera + mic, plus
   // `display-capture` to present a screen. Allow only from our own origin and
-  // trusted meeting hosts; deny everything else. (MEDIA_HOSTS lives in config.js.)
-  const allowFrom = (url) => {
-    try {
-      const host = new URL(url).hostname;
-      return MEDIA_HOSTS.some((h) => host === h || host.endsWith(`.${h}`));
-    } catch {
-      return false;
-    }
-  };
-  const ALLOWED_PERMISSIONS = ['media', 'display-capture', 'notifications'];
+  // trusted meeting hosts; deny everything else, except full screen, which any
+  // video player may ask for. (MEDIA_HOSTS and the rule live in config.js.)
   ses.setPermissionRequestHandler((wc, permission, cb, details) => {
     const url = (details && details.requestingUrl) || (wc && wc.getURL && wc.getURL()) || '';
-    const ok = ALLOWED_PERMISSIONS.includes(permission) && allowFrom(url);
+    const ok = isPermissionAllowed(permission, url);
     log.info('permission request', permission, url, '->', ok);
     // The app-level grant above lets Chromium hand the stream to the page, but the
     // OS still gates the hardware. Make sure the OS prompt/guidance actually shows.
     if (ok && permission === 'media') ensureOsMediaAccess();
     cb(ok);
   });
-  ses.setPermissionCheckHandler((wc, permission, origin) => {
-    return ALLOWED_PERMISSIONS.includes(permission) && allowFrom(origin);
-  });
+  ses.setPermissionCheckHandler((wc, permission, origin) => isPermissionAllowed(permission, origin));
 
   // getDisplayMedia() is rejected outright unless the app installs a handler —
   // this is what makes "Present now" work in an in-app Google Meet.
